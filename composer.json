@@ -1,0 +1,23 @@
+{
+    "name": "dolsombouda/abonnement",
+    "description": "The application to manage subscription.",
+    "type": "project",
+    "require": {
+        "php": "^8.4",
+        "monolog/monolog": "^3.9",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Dolsombouda\\Abonnement\\": "src/",
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "BoudaDols",
+            "email": "dolsombouda@gmail.com"
+        }
+    ]
+}

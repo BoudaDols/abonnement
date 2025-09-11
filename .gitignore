@@ -1,0 +1,6 @@
+*.xml
+*.iml
+/.idea
+composer.lock
+/vendor
+.DS_Store
