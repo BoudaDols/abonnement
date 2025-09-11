@@ -4,3 +4,5 @@
 composer.lock
 /vendor
 .DS_Store
+/.env
+/.phpunit.result.cache
