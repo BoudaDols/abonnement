@@ -11,6 +11,20 @@ $dotenv->load();
 
 $logger = (new LoggerFactory())->createLogger('migration');
 
+// Create database if not exists
+try {
+    $pdo = new PDO(
+        "mysql:host={$_ENV['DB_HOST']};port={$_ENV['DB_PORT']}",
+        $_ENV['DB_USERNAME'],
+        $_ENV['DB_PASSWORD']
+    );
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$_ENV['DB_DATABASE']}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $logger->info("Database `{$_ENV['DB_DATABASE']}` ready");
+} catch (PDOException $e) {
+    $logger->error("Failed to create database: " . $e->getMessage());
+    exit(1);
+}
+
 // Config DB
 $capsule = new Capsule;
 $capsule->addConnection([
@@ -31,16 +45,18 @@ $migrationDir = __DIR__ . '/../src/Migration';
 $migrations = [];
 
 if (is_dir($migrationDir)) {
-    foreach (glob($migrationDir . '/*.php') as $file) {
-        $className = 'App\\Migration\\' . basename($file, '.php');
+    $files = glob($migrationDir . '/*.php');
+    sort($files);
+    foreach ($files as $file) {
+        require_once $file;
+        $className = 'App\\Migration\\' . preg_replace('/^\d+_/', '', basename($file, '.php'));
         if (class_exists($className)) {
             $migrations[] = $className;
         }
     }
 }
 
-// Trier les migrations par nom de fichier
-sort($migrations);
+// Migrations are already ordered by filename prefix, no need to sort again
 
 $logger->info('Starting migrations');
 

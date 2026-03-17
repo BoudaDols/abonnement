@@ -8,7 +8,10 @@ if ($argc < 2) {
 $modelName = $argv[1];
 $tableName = strtolower($modelName) . 's';
 $modelPath = __DIR__ . "/../src/Model/{$modelName}.php";
-$migrationPath = __DIR__ . "/../src/Migration/Create{$modelName}sTable.php";
+$migrationDir = __DIR__ . '/../src/Migration';
+$existingMigrations = glob($migrationDir . '/*.php');
+$nextPrefix = str_pad(count($existingMigrations) + 1, 3, '0', STR_PAD_LEFT);
+$migrationPath = "{$migrationDir}/{$nextPrefix}_Create{$modelName}sTable.php";
 
 if (file_exists($modelPath)) {
     echo "Model {$modelName} already exists!\n";

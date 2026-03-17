@@ -8,8 +8,6 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 abstract class BaseModel extends Model
 {
-    abstract public static function createTable(): void;
-    
     protected static function schema(): \Illuminate\Database\Schema\Builder
     {
         return Capsule::schema();

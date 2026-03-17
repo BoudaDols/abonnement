@@ -15,7 +15,7 @@ class PlanSeeder
             ['name' => 'Free',    'type' => 'free', 'price' => 0,     'duration_days' => 30,  'is_active' => true],
             ['name' => 'Basic',   'type' => 'paid', 'price' => 4.99,  'duration_days' => 30,  'is_active' => true],
             ['name' => 'Pro',     'type' => 'paid', 'price' => 9.99,  'duration_days' => 30,  'is_active' => true],
-            ['name' => 'Premium', 'type' => 'paid', 'price' => 19.99, 'duration_days' => 365, 'is_active' => true],
+            ['name' => 'Premium', 'type' => 'paid', 'price' => 19.99, 'duration_days' => 30, 'is_active' => true],
         ];
 
         $logger->info('Starting plan seeder');
