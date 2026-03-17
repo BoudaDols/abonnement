@@ -61,6 +61,7 @@ POST   /api/payments            # Process a payment
 - [x] Subscription model + migration
 - [x] Payment model + migration
 - [x] PlanSeeder with predefined plans
+- [x] Unit tests for Plan, Subscription and Payment models
 
 ### Step 3 - Authentication Middleware 🔲
 - [ ] JWT middleware to validate tokens from external auth service
@@ -99,4 +100,10 @@ php bin/seed.php      # insert predefined plans
 ```bash
 php bin/make-model.php ModelName          # creates model + migration
 php bin/make-controller.php ControllerName # creates controller
+```
+
+### Tests
+```bash
+composer test                        # run all tests
+php vendor/bin/phpunit tests/ModelTest.php  # run model tests only
 ```
