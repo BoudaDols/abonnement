@@ -3,10 +3,13 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use App\Service\LoggerFactory;
 
 // Charger .env
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
+
+$logger = (new LoggerFactory())->createLogger('migration');
 
 // Config DB
 $capsule = new Capsule;
@@ -39,9 +42,13 @@ if (is_dir($migrationDir)) {
 // Trier les migrations par nom de fichier
 sort($migrations);
 
+$logger->info('Starting migrations');
+
 foreach ($migrations as $migrationClass) {
     $migrationClass::up();
+    $logger->info("Migration executed: {$migrationClass}");
     echo "Migration {$migrationClass} exécutée.\n";
 }
 
+$logger->info('Migrations completed');
 echo "Migration terminée !\n";

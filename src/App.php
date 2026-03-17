@@ -23,6 +23,8 @@
       }
 
       public function run() {
+         header('Content-Type: application/json');
+
          // Dispatcher FastRoute
          $dispatcher = simpleDispatcher(require __DIR__ . '/../config/routes.php');
 
@@ -39,18 +41,20 @@
          switch ($routeInfo[0]) {
                case \FastRoute\Dispatcher::NOT_FOUND:
                   http_response_code(404);
-                  echo "404 Not Found";
+                  echo json_encode(['error' => 'Not Found']);
                   break;
                case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
                   http_response_code(405);
-                  echo "405 Method Not Allowed";
+                  echo json_encode(['error' => 'Method Not Allowed']);
                   break;
                case \FastRoute\Dispatcher::FOUND:
                   $handler = $routeInfo[1];
                   $vars = $routeInfo[2];
                   [$class, $method] = $handler;
                   $controller = new $class($this->logger);
-                  echo call_user_func_array([$controller, $method], $vars);
+                  $result = call_user_func_array([$controller, $method], $vars);
+                  $this->logger->info("{$httpMethod} {$uri} -> {$class}::{$method}");
+                  echo is_string($result) ? $result : json_encode($result);
                   break;
          }
       }
