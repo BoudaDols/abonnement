@@ -6,3 +6,6 @@ composer.lock
 .DS_Store
 /.env
 /.phpunit.result.cache
+*.log
+.env
+var/app.log
