@@ -19,7 +19,22 @@ abstract class BaseTestCase extends TestCase
             ]);
             $capsule->setAsGlobal();
             $capsule->bootEloquent();
+            $this->runMigrations();
             self::$booted = true;
+        }
+    }
+
+    private function runMigrations(): void
+    {
+        $migrationDir = __DIR__ . '/../src/Migration';
+        $files = glob($migrationDir . '/*.php');
+        sort($files);
+        foreach ($files as $file) {
+            require_once $file;
+            $className = 'App\\Migration\\' . preg_replace('/^\d+_/', '', basename($file, '.php'));
+            if (class_exists($className)) {
+                $className::up();
+            }
         }
     }
 }

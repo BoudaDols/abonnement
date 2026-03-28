@@ -21,7 +21,7 @@ class SubscriptionController extends BaseController
 
     public function create(): string
     {
-        $body = json_decode(file_get_contents('php://input'), true);
+        $body = $this->getInput();
         $userId = $body['user_id'] ?? null;
         $planId = $body['plan_id'] ?? null;
 

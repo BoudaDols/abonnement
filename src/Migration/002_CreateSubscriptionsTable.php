@@ -14,7 +14,7 @@ class CreateSubscriptionsTable
                 $table->id();
                 $table->unsignedBigInteger('user_id');  // external user ID from auth service
                 $table->foreignId('plan_id')->constrained()->cascadeOnDelete();
-                $table->enum('status', ['active', 'expired', 'canceled'])->default('active');
+                $table->string('status')->default('active'); // active, pending, expired, canceled
                 $table->timestamp('starts_at');
                 $table->timestamp('ends_at');
                 $table->timestamps();

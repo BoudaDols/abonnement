@@ -23,4 +23,9 @@ abstract class BaseController
     {
         return $this->json(['error' => $message], $status);
     }
+
+    protected function getInput(): array
+    {
+        return json_decode(file_get_contents('php://input'), true) ?? [];
+    }
 }

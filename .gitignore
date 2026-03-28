@@ -9,3 +9,4 @@ composer.lock
 *.log
 .env
 var/app.log
+.env

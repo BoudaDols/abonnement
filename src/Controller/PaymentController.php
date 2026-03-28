@@ -25,7 +25,7 @@ class PaymentController extends BaseController
 
     public function create(): string
     {
-        $body = json_decode(file_get_contents('php://input'), true);
+        $body = $this->getInput();
         $subscriptionId = $body['subscription_id'] ?? null;
         $amount         = $body['amount'] ?? null;
         $transactionId  = $body['transaction_id'] ?? null;
