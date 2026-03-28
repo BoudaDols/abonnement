@@ -63,19 +63,19 @@ POST   /api/payments            # Process a payment
 - [x] PlanSeeder with predefined plans
 - [x] Unit tests for Plan, Subscription and Payment models
 
-### Step 3 - Authentication Middleware 🔲
-- [ ] JWT middleware to validate tokens from external auth service
-- [ ] Extract user ID from token and inject into request
+### Step 3 - Authentication Middleware ✅
+- [x] Authentication delegated to API gateway (no JWT middleware needed)
+- [x] user_id injected directly in request by the API gateway
 
-### Step 4 - Controllers 🔲
-- [ ] PlanController (index, show)
-- [ ] SubscriptionController (create, show, delete)
-- [ ] PaymentController (index, create)
+### Step 4 - Controllers ✅
+- [x] PlanController (index, show)
+- [x] SubscriptionController (create, show, delete)
+- [x] PaymentController (index, create)
 
-### Step 5 - Business Logic 🔲
-- [ ] Free plan: 30 days limit, non-renewable
-- [ ] Paid plan: payment required, renewable
-- [ ] Subscription status management (active, expired, canceled)
+### Step 5 - Business Logic ✅
+- [x] Free plan: 30 days limit, non-renewable
+- [x] Paid plan: payment required, activates after payment
+- [x] Subscription status management (active, pending, expired, canceled)
 
 ### Step 6 - Payment Gateway 🔲
 - [ ] Integrate Stripe or PayPal
