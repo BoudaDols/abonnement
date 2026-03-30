@@ -35,6 +35,7 @@ All responses return JSON. Successful responses return the requested data direct
 | 404  | Not Found |
 | 405  | Method Not Allowed |
 | 422  | Unprocessable Entity (validation error) |
+| 502  | Payment gateway error |
 
 ---
 
@@ -315,7 +316,7 @@ GET /api/payments?user_id={user_id}
 
 ### Process a payment
 
-Processes a payment for a pending subscription and activates it.
+Processes a payment for a pending subscription via the configured payment gateway (Stripe or PayPal) and activates it.
 
 ```
 POST /api/payments
@@ -326,14 +327,14 @@ POST /api/payments
 | Name            | Type    | Required | Description |
 |-----------------|---------|----------|-------------|
 | subscription_id | integer | yes      | ID of the subscription to pay for |
-| amount          | decimal | yes      | Amount paid |
-| transaction_id  | string  | yes      | Transaction ID from the payment gateway |
+| amount          | decimal | yes      | Amount to charge |
+| currency        | string  | no       | Currency code (default: `usd`) |
 
 ```json
 {
   "subscription_id": 1,
   "amount": 4.99,
-  "transaction_id": "txn_123456"
+  "currency": "usd"
 }
 ```
 
@@ -344,7 +345,7 @@ POST /api/payments
   "subscription_id": 1,
   "amount": "4.99",
   "status": "paid",
-  "transaction_id": "txn_123456",
+  "transaction_id": "pi_stripe_123456",
   "paid_at": "2024-01-01T00:00:00.000000Z",
   "created_at": "2024-01-01T00:00:00.000000Z",
   "updated_at": "2024-01-01T00:00:00.000000Z"
@@ -354,7 +355,7 @@ POST /api/payments
 **Response 422 - Missing fields**
 ```json
 {
-  "error": "subscription_id, amount and transaction_id are required"
+  "error": "subscription_id and amount are required"
 }
 ```
 
@@ -362,6 +363,13 @@ POST /api/payments
 ```json
 {
   "error": "Subscription not found"
+}
+```
+
+**Response 502 - Gateway error**
+```json
+{
+  "error": "Payment failed: <gateway error message>"
 }
 ```
 
@@ -395,3 +403,32 @@ POST /api/payments
 | Basic   | paid | $4.99  | 30 days  |
 | Pro     | paid | $9.99  | 30 days  |
 | Premium | paid | $19.99 | 365 days |
+
+---
+
+## Payment Gateways
+
+The API supports Stripe and PayPal. The active gateway is configured via the `PAYMENT_GATEWAY` environment variable.
+
+### Configuration
+
+```env
+PAYMENT_GATEWAY=stripe   # or paypal
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_xxx
+
+# PayPal
+PAYPAL_CLIENT_ID=xxx
+PAYPAL_CLIENT_SECRET=xxx
+```
+
+### Stripe
+- Uses PaymentIntents API
+- Amount is converted to cents automatically
+- Returns a PaymentIntent ID as transaction ID
+
+### PayPal
+- Uses Orders API v2
+- Automatically uses sandbox URL when `APP_ENV` is not `prod`
+- Returns a PayPal Order ID as transaction ID

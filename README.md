@@ -1,17 +1,24 @@
 # Abonnement
 
-A lightweight PHP REST API to manage subscriptions (free and paid). Authentication is delegated to an external service and validated via JWT middleware.
+A lightweight PHP REST API to manage subscriptions (free and paid) without framework. Authentication is delegated to an external service and validated via JWT middleware.
 
 ## Description
 
-This API allows to:
-- Manage subscription plans (free and paid)
-- Subscribe users to plans
-- Handle payments for paid plans
-- Track subscription status and history
+Abonnement is a standalone microservice built in pure PHP (no framework) designed to handle the full lifecycle of user subscriptions. It is meant to be used behind an API gateway that handles authentication and forwards requests with the `user_id` already injected.
 
-**Free plan**: limited to 30 days, no payment required, non-renewable  
-**Paid plan**: requires payment, renewable, custom duration
+The service covers two types of plans:
+- **Free plan**: automatically activated, limited to 30 days, non-renewable
+- **Paid plan**: requires a payment to be processed before activation, renewable
+
+Payments are handled through an abstracted gateway layer supporting both **Stripe** and **PayPal**, switchable via a single environment variable. The active provider processes the charge and returns a transaction ID that is stored alongside the payment record.
+
+The project is built with a Laravel-inspired architecture (Eloquent ORM, migrations, seeders) while remaining completely framework-free, making it lightweight and easy to deploy as an internal service.
+
+### Key design decisions
+- **No authentication**: delegated entirely to the API gateway
+- **No framework**: only essential packages (Eloquent, FastRoute, Monolog, dotenv)
+- **Payment abstraction**: swap Stripe/PayPal without touching business logic
+- **Auto-discovery**: migrations and seeders are discovered automatically, no manual registration needed
 
 ## Project Structure
 ```
@@ -20,6 +27,7 @@ src/
 ├── Model/          # Eloquent models
 ├── Migration/      # Database migrations
 └── Service/        # Business logic services
+    └── Payment/    # Payment gateway implementations
 
 bin/
 ├── migrate.php             # Run migrations
@@ -77,8 +85,11 @@ POST   /api/payments            # Process a payment
 - [x] Paid plan: payment required, activates after payment
 - [x] Subscription status management (active, pending, expired, canceled)
 
-### Step 6 - Payment Gateway 🔲
-- [ ] Integrate Stripe or PayPal
+### Step 6 - Payment Gateway ✅
+- [x] PaymentGatewayInterface for provider abstraction
+- [x] Stripe integration via PaymentIntents API
+- [x] PayPal integration via Orders API (sandbox + prod)
+- [x] PaymentGatewayFactory to switch provider via .env
 - [ ] Handle payment webhooks
 
 ## Getting Started
@@ -91,7 +102,7 @@ POST   /api/payments            # Process a payment
 ### Installation
 ```bash
 composer install
-cp .env.example .env  # configure your database credentials
+cp .env.example .env  # configure your database credentials and payment gateway
 php bin/migrate.php
 php bin/seed.php      # insert predefined plans
 ```

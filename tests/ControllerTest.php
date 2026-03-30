@@ -27,7 +27,12 @@ class TestableSubscriptionController extends SubscriptionController
 class TestablePaymentController extends PaymentController
 {
     public array $input = [];
+    public ?\App\Service\Payment\PaymentGatewayInterface $gateway = null;
     protected function getInput(): array { return $this->input; }
+    protected function makeGateway(): \App\Service\Payment\PaymentGatewayInterface
+    {
+        return $this->gateway ?? parent::makeGateway();
+    }
 }
 
 class ControllerTest extends BaseTestCase
@@ -191,14 +196,21 @@ class ControllerTest extends BaseTestCase
             'ends_at'   => Carbon::now()->addDays(30),
         ]);
 
-        $this->paymentController->input = [
+        $mockGateway = new class implements \App\Service\Payment\PaymentGatewayInterface {
+            public function charge(float $amount, string $currency, array $metadata = []): string {
+                return 'txn_mock_123';
+            }
+        };
+
+        $this->paymentController->gateway = $mockGateway;
+        $this->paymentController->input   = [
             'subscription_id' => $subscription->id,
             'amount'          => 4.99,
-            'transaction_id'  => 'txn_123',
         ];
 
         $result = json_decode($this->paymentController->create(), true);
         $this->assertEquals('paid', $result['status']);
+        $this->assertEquals('txn_mock_123', $result['transaction_id']);
         $this->assertEquals('active', Subscription::find($subscription->id)->status);
     }
 
@@ -206,12 +218,19 @@ class ControllerTest extends BaseTestCase
     {
         $this->paymentController->input = ['subscription_id' => 1];
         $result = json_decode($this->paymentController->create(), true);
-        $this->assertEquals('subscription_id, amount and transaction_id are required', $result['error']);
+        $this->assertEquals('subscription_id and amount are required', $result['error']);
     }
 
     public function testCreatePaymentFailsForUnknownSubscription(): void
     {
-        $this->paymentController->input = ['subscription_id' => 999, 'amount' => 4.99, 'transaction_id' => 'txn_123'];
+        $mockGateway = new class implements \App\Service\Payment\PaymentGatewayInterface {
+            public function charge(float $amount, string $currency, array $metadata = []): string {
+                return 'txn_mock_123';
+            }
+        };
+
+        $this->paymentController->gateway = $mockGateway;
+        $this->paymentController->input   = ['subscription_id' => 999, 'amount' => 4.99];
         $result = json_decode($this->paymentController->create(), true);
         $this->assertEquals('Subscription not found', $result['error']);
     }

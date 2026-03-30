@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Model\Payment;
 use App\Model\Subscription;
+use App\Service\Payment\PaymentGatewayFactory;
+use App\Service\Payment\PaymentGatewayInterface;
 use Carbon\Carbon;
 
 class PaymentController extends BaseController
@@ -25,19 +27,28 @@ class PaymentController extends BaseController
 
     public function create(): string
     {
-        $body = $this->getInput();
+        $body           = $this->getInput();
         $subscriptionId = $body['subscription_id'] ?? null;
         $amount         = $body['amount'] ?? null;
-        $transactionId  = $body['transaction_id'] ?? null;
+        $currency       = $body['currency'] ?? 'usd';
 
-        if (!$subscriptionId || !$amount || !$transactionId) {
-            return $this->error('subscription_id, amount and transaction_id are required', 422);
+        if (!$subscriptionId || !$amount) {
+            return $this->error('subscription_id and amount are required', 422);
         }
 
         $subscription = Subscription::find($subscriptionId);
 
         if (!$subscription) {
             return $this->error('Subscription not found', 404);
+        }
+
+        try {
+            $transactionId = $this->makeGateway()->charge($amount, $currency, [
+                'subscription_id' => $subscriptionId,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Payment failed: ' . $e->getMessage());
+            return $this->error('Payment failed: ' . $e->getMessage(), 502);
         }
 
         $payment = Payment::create([
@@ -48,9 +59,13 @@ class PaymentController extends BaseController
             'paid_at'         => Carbon::now(),
         ]);
 
-        // Activate subscription after payment
         $subscription->update(['status' => 'active']);
 
         return $this->json($payment, 201);
+    }
+
+    protected function makeGateway(): PaymentGatewayInterface
+    {
+        return PaymentGatewayFactory::make();
     }
 }
