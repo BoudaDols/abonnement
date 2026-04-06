@@ -32,6 +32,7 @@ All responses return JSON. Successful responses return the requested data direct
 |------|-------------|
 | 200  | Success |
 | 201  | Created |
+| 401  | Unauthorized (invalid webhook signature) |
 | 404  | Not Found |
 | 405  | Method Not Allowed |
 | 422  | Unprocessable Entity (validation error) |
@@ -387,7 +388,13 @@ POST /api/payments
                         [POST /api/payments]
                                 |
                                 └--> status: active (payment confirmed)
-                                
+                                   OR
+                        [POST /api/webhooks/stripe]
+                        [POST /api/webhooks/paypal]
+                                |
+                                |-- payment succeeded --> status: active
+                                └-- payment failed    --> status: pending
+
 [DELETE /api/subscriptions/{id}]
         |
         └--> status: canceled
@@ -417,18 +424,100 @@ PAYMENT_GATEWAY=stripe   # or paypal
 
 # Stripe
 STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # PayPal
 PAYPAL_CLIENT_ID=xxx
 PAYPAL_CLIENT_SECRET=xxx
+PAYPAL_WEBHOOK_ID=xxx
 ```
 
 ### Stripe
 - Uses PaymentIntents API
 - Amount is converted to cents automatically
 - Returns a PaymentIntent ID as transaction ID
+- Webhook signature verified via HMAC-SHA256
 
 ### PayPal
 - Uses Orders API v2
 - Automatically uses sandbox URL when `APP_ENV` is not `prod`
 - Returns a PayPal Order ID as transaction ID
+- Webhook signature verified via PayPal certificate API
+
+---
+
+## Webhooks
+
+Webhooks allow payment gateways to notify the API asynchronously about payment events. This is more reliable than synchronous payment confirmation as it handles delayed confirmations, failures and refunds.
+
+### Stripe Webhook
+
+```
+POST /api/webhooks/stripe
+```
+
+**Headers**
+
+| Name | Description |
+|------|-------------|
+| Stripe-Signature | HMAC signature provided by Stripe |
+
+**Events handled**
+
+| Event | Action |
+|-------|--------|
+| `payment_intent.succeeded` | Set payment to `paid`, activate subscription |
+| `payment_intent.payment_failed` | Set payment to `failed`, set subscription back to `pending` |
+
+**Response 200**
+```json
+{
+  "received": true
+}
+```
+
+**Response 401**
+```json
+{
+  "error": "Invalid signature"
+}
+```
+
+---
+
+### PayPal Webhook
+
+```
+POST /api/webhooks/paypal
+```
+
+**Headers**
+
+| Name | Description |
+|------|-------------|
+| PAYPAL-TRANSMISSION-ID | PayPal transmission ID |
+| PAYPAL-TRANSMISSION-TIME | PayPal transmission time |
+| PAYPAL-TRANSMISSION-SIG | PayPal signature |
+| PAYPAL-CERT-URL | PayPal certificate URL |
+| PAYPAL-AUTH-ALGO | PayPal auth algorithm |
+
+**Events handled**
+
+| Event | Action |
+|-------|--------|
+| `PAYMENT.CAPTURE.COMPLETED` | Set payment to `paid`, activate subscription |
+| `PAYMENT.CAPTURE.DENIED` | Set payment to `failed`, set subscription back to `pending` |
+
+**Response 200**
+```json
+{
+  "received": true
+}
+```
+
+**Response 401**
+```json
+{
+  "error": "Invalid signature"
+}
+```

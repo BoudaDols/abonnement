@@ -50,6 +50,9 @@ DELETE /api/subscriptions/{id}  # Cancel subscription
 
 GET    /api/payments            # Payment history
 POST   /api/payments            # Process a payment
+
+POST   /api/webhooks/stripe     # Stripe webhook
+POST   /api/webhooks/paypal     # PayPal webhook
 ```
 
 ## Build Plan
@@ -90,7 +93,7 @@ POST   /api/payments            # Process a payment
 - [x] Stripe integration via PaymentIntents API
 - [x] PayPal integration via Orders API (sandbox + prod)
 - [x] PaymentGatewayFactory to switch provider via .env
-- [ ] Handle payment webhooks
+- [x] Handle payment webhooks
 
 ## Getting Started
 

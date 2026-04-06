@@ -4,6 +4,7 @@
    use App\Controller\PlanController;
    use App\Controller\SubscriptionController;
    use App\Controller\PaymentController;
+   use App\Controller\WebhookController;
 
    return function (\FastRoute\RouteCollector $route) {
       $route->addRoute('GET', '/', [HomeController::class, 'index']);
@@ -17,4 +18,7 @@
 
       $route->addRoute('GET',    '/api/payments',           [PaymentController::class, 'index']);
       $route->addRoute('POST',   '/api/payments',           [PaymentController::class, 'create']);
+
+      $route->addRoute('POST',   '/api/webhooks/stripe',    [WebhookController::class, 'stripe']);
+      $route->addRoute('POST',   '/api/webhooks/paypal',    [WebhookController::class, 'paypal']);
    };
