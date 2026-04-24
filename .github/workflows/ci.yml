@@ -43,7 +43,7 @@ jobs:
         run: php -d memory_limit=512M vendor/bin/phpstan analyse --configuration phpstan.neon
 
       - name: Run PHPUnit
-        run: composer test
+        run: php vendor/bin/phpunit --configuration phpunit.xml --testdox
         env:
           APP_ENV: test
           DB_CONNECTION: mysql
