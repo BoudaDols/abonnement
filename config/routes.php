@@ -5,9 +5,12 @@
    use App\Controller\SubscriptionController;
    use App\Controller\PaymentController;
    use App\Controller\WebhookController;
+   use App\Controller\DocsController;
 
    return function (\FastRoute\RouteCollector $route) {
       $route->addRoute('GET', '/', [HomeController::class, 'index']);
+      $route->addRoute('GET', '/api/docs', [DocsController::class, 'index']);
+      $route->addRoute('GET', '/openapi.yaml', [DocsController::class, 'spec']);
 
       $route->addRoute('GET',    '/api/plans',              [PlanController::class, 'index']);
       $route->addRoute('GET',    '/api/plans/{id}',         [PlanController::class, 'show']);

@@ -9,3 +9,4 @@
 var/app.log
 .env
 .env
+var/app.log
