@@ -1,0 +1,10 @@
+vendor/
+var/
+tests/
+.github/
+k8s/
+.env
+.git
+*.md
+phpunit.xml
+phpstan.neon

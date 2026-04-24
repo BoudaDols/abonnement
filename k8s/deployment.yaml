@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abonnement
+  labels:
+    app: abonnement
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: abonnement
+  template:
+    metadata:
+      labels:
+        app: abonnement
+    spec:
+      containers:
+        - name: abonnement
+          image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: abonnement-config
+            - secretRef:
+                name: abonnement-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5

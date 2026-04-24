@@ -1,0 +1,10 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    excludePaths:
+        - vendor
+        - src/Service/Payment/StripeGateway.php
+    ignoreErrors:
+        - identifier: staticMethod.notFound
+        - identifier: property.notFound

@@ -17,11 +17,14 @@
         }
     },
     "require-dev": {
-        "phpunit/phpunit": "^12.3"
+        "phpunit/phpunit": "^12.3",
+        "phpstan/phpstan": "^2.1",
+        "tightenco/collect": "^9.52"
     },
 
     "scripts": {
-        "test": "./vendor/bin/phpunit --testdox"
+        "test": "./vendor/bin/phpunit --testdox",
+        "analyse": "php -d memory_limit=512M vendor/bin/phpstan analyse --configuration phpstan.neon"
     },
 
     "minimum-stability": "stable",
