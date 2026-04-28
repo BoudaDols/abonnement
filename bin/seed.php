@@ -6,7 +6,7 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use App\Seeder\PlanSeeder;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();
 
 $capsule = new Capsule;
 $capsule->addConnection([
