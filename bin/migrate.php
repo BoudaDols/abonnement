@@ -13,13 +13,18 @@ $logger = (new LoggerFactory())->createLogger('migration');
 
 // Create database if not exists
 try {
-    $host = getenv('DB_HOST');
+    $host = getenv('DB_HOST') ?: '127.0.0.1';
     $port = getenv('DB_PORT') ?: '3306';
-    $dbName = getenv('DB_DATABASE');
+    $dbName = getenv('DB_DATABASE') ?: 'abonnement';
+    $user = getenv('DB_USERNAME');
+    $pass = getenv('DB_PASSWORD');
+
+    if (!$user) throw new Exception("DB_USERNAME environment variable is missing.");
+
     $pdo = new PDO(
         "mysql:host={$host};port={$port}",
-        getenv('DB_USERNAME'),
-        getenv('DB_PASSWORD'),
+        $user,
+        $pass,
         [PDO::ATTR_TIMEOUT => 5]
     );
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");

@@ -8,18 +8,13 @@ use App\Seeder\PlanSeeder;
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeLoad();
 
-// Helper to get env with fallback to system getenv()
-$getEnvVar = function($key) {
-    return $_ENV[$key] ?? getenv($key);
-};
-
 $capsule = new Capsule;
 $capsule->addConnection([
-    'driver'    => $getEnvVar('DB_CONNECTION') ?: 'mysql',
-    'host'      => $getEnvVar('DB_HOST'),
-    'database'  => $getEnvVar('DB_DATABASE'),
-    'username'  => $getEnvVar('DB_USERNAME'),
-    'password'  => $getEnvVar('DB_PASSWORD'),
+    'driver'    => getenv('DB_CONNECTION') ?: 'mysql',
+    'host'      => getenv('DB_HOST'),
+    'database'  => getenv('DB_DATABASE'),
+    'username'  => getenv('DB_USERNAME'),
+    'password'  => getenv('DB_PASSWORD'),
     'charset'   => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
     'prefix'    => '',

@@ -26,6 +26,7 @@ spec:
       containers:
         - name: abonnement
           image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          command: ["php", "-S", "0.0.0.0:8080", "-t", "public", "public/index.php"]
           ports:
             - containerPort: 8080
           envFrom:
