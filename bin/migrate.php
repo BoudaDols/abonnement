@@ -7,7 +7,7 @@ use App\Service\LoggerFactory;
 
 // Charger .env
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();
 
 $logger = (new LoggerFactory())->createLogger('migration');
 

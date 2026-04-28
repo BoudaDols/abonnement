@@ -14,6 +14,15 @@ spec:
       labels:
         app: abonnement
     spec:
+      initContainers:
+      - name: migration
+        image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        command: ["php", "bin/migrate.php"]
+        envFrom:
+        - configMapRef:
+            name: abonnement-config
+        - secretRef:
+            name: abonnement-secrets
       containers:
         - name: abonnement
           image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
