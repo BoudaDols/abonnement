@@ -19,7 +19,8 @@ try {
     $pdo = new PDO(
         "mysql:host={$host};port={$port}",
         getenv('DB_USERNAME'),
-        getenv('DB_PASSWORD')
+        getenv('DB_PASSWORD'),
+        [PDO::ATTR_TIMEOUT => 5]
     );
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     $logger->info("Database `{$dbName}` ready");
@@ -39,6 +40,9 @@ $capsule->addConnection([
     'charset'   => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
     'prefix'    => '',
+    'options'   => [
+        PDO::ATTR_TIMEOUT => 5,
+    ],
 ]);
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
