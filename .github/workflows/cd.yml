@@ -8,7 +8,6 @@ jobs:
   deploy:
     name: Build + Deploy to EKS
     runs-on: ubuntu-latest
-    needs: []
 
     steps:
       - name: Checkout code
@@ -52,6 +51,7 @@ jobs:
           sed -i "s|\$ECR_REPOSITORY|$ECR_REPOSITORY|g" k8s/deployment.yaml
           sed -i "s|\$IMAGE_TAG|$IMAGE_TAG|g" k8s/deployment.yaml
           kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/mysql.yaml
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl rollout status deployment/abonnement
