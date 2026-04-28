@@ -13,13 +13,16 @@ $logger = (new LoggerFactory())->createLogger('migration');
 
 // Create database if not exists
 try {
+    $host = getenv('DB_HOST');
+    $port = getenv('DB_PORT') ?: '3306';
+    $dbName = getenv('DB_DATABASE');
     $pdo = new PDO(
-        "mysql:host={$_ENV['DB_HOST']};port={$_ENV['DB_PORT']}",
-        $_ENV['DB_USERNAME'],
-        $_ENV['DB_PASSWORD']
+        "mysql:host={$host};port={$port}",
+        getenv('DB_USERNAME'),
+        getenv('DB_PASSWORD')
     );
-    $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$_ENV['DB_DATABASE']}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $logger->info("Database `{$_ENV['DB_DATABASE']}` ready");
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $logger->info("Database `{$dbName}` ready");
 } catch (PDOException $e) {
     $logger->error("Failed to create database: " . $e->getMessage());
     exit(1);
@@ -28,11 +31,11 @@ try {
 // Config DB
 $capsule = new Capsule;
 $capsule->addConnection([
-    'driver'    => $_ENV['DB_CONNECTION'],
-    'host'      => $_ENV['DB_HOST'],
-    'database'  => $_ENV['DB_DATABASE'],
-    'username'  => $_ENV['DB_USERNAME'],
-    'password'  => $_ENV['DB_PASSWORD'],
+    'driver'    => getenv('DB_CONNECTION') ?: 'mysql',
+    'host'      => getenv('DB_HOST'),
+    'database'  => getenv('DB_DATABASE'),
+    'username'  => getenv('DB_USERNAME'),
+    'password'  => getenv('DB_PASSWORD'),
     'charset'   => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
     'prefix'    => '',
