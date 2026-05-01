@@ -44,7 +44,9 @@ class StripeWebhookHandler
     {
         $payment = Payment::where('transaction_id', $intentId)->first();
 
-        if (!$payment) return;
+        if (!$payment) {
+            return;
+        }
 
         $payment->update(['status' => 'paid', 'paid_at' => Carbon::now()]);
         $payment->subscription->update(['status' => 'active']);
@@ -54,7 +56,9 @@ class StripeWebhookHandler
     {
         $payment = Payment::where('transaction_id', $intentId)->first();
 
-        if (!$payment) return;
+        if (!$payment) {
+            return;
+        }
 
         $payment->update(['status' => 'failed']);
         $payment->subscription->update(['status' => 'pending']);

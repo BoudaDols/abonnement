@@ -21,7 +21,7 @@ class CreatePlansTable
             });
         }
     }
-    
+
     public static function down(): void
     {
         Capsule::schema()->dropIfExists('plans');

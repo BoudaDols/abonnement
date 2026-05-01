@@ -21,7 +21,7 @@ class CreateSubscriptionsTable
             });
         }
     }
-    
+
     public static function down(): void
     {
         Capsule::schema()->dropIfExists('subscriptions');

@@ -21,7 +21,7 @@ class CreatePaymentsTable
             });
         }
     }
-    
+
     public static function down(): void
     {
         Capsule::schema()->dropIfExists('payments');

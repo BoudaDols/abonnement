@@ -62,7 +62,9 @@ class PaypalWebhookHandler
     {
         $payment = Payment::where('transaction_id', $orderId)->first();
 
-        if (!$payment) return;
+        if (!$payment) {
+            return;
+        }
 
         $payment->update(['status' => 'paid', 'paid_at' => Carbon::now()]);
         $payment->subscription->update(['status' => 'active']);
@@ -72,7 +74,9 @@ class PaypalWebhookHandler
     {
         $payment = Payment::where('transaction_id', $orderId)->first();
 
-        if (!$payment) return;
+        if (!$payment) {
+            return;
+        }
 
         $payment->update(['status' => 'failed']);
         $payment->subscription->update(['status' => 'pending']);
