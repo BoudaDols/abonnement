@@ -25,12 +25,16 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Copy application code
 COPY . .
 
-# Create log directory
-RUN mkdir -p var && chmod -R 775 var
+# Create log directory with correct permissions
+RUN mkdir -p var && touch var/app.log && chown -R www-data:www-data var && chmod -R 775 var
 
 # Copy nginx config
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 
+# Copy startup script
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh
+
 EXPOSE 8080
 
-CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+CMD ["/start.sh"]

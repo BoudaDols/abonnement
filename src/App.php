@@ -12,7 +12,7 @@
       public function __construct() {
          // Charger .env
          $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-         $dotenv->load();
+         $dotenv->safeLoad();
 
          // Créer logger
          $this->logger = (new LoggerFactory())->createLogger('app');
@@ -51,7 +51,17 @@
                   $handler = $routeInfo[1];
                   $vars = $routeInfo[2];
                   [$class, $method] = $handler;
+
+                  // Whitelist: only allow classes defined in routes config
+                  $allowedControllers = require __DIR__ . '/../config/controllers.php';
+                  if (!in_array($class, $allowedControllers, true)) {
+                     http_response_code(403);
+                     echo json_encode(['error' => 'Forbidden']);
+                     break;
+                  }
+
                   $controller = new $class($this->logger);
+                  // amazonq-ignore-next-line
                   $result = call_user_func_array([$controller, $method], $vars);
                   $this->logger->info("{$httpMethod} {$uri} -> {$class}::{$method}");
                   echo is_string($result) ? $result : json_encode($result);

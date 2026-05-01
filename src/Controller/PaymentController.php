@@ -12,7 +12,7 @@ class PaymentController extends BaseController
 {
     public function index(): string
     {
-        $userId = $_GET['user_id'] ?? null;
+        $userId = (int) ($_GET['user_id'] ?? 0);
 
         if (!$userId) {
             return $this->error('user_id is required', 422);
@@ -28,15 +28,15 @@ class PaymentController extends BaseController
     public function create(): string
     {
         $body           = $this->getInput();
-        $subscriptionId = $body['subscription_id'] ?? null;
-        $amount         = $body['amount'] ?? null;
-        $currency       = $body['currency'] ?? 'usd';
+        $subscriptionId = (int) ($body['subscription_id'] ?? 0);
+        $amount         = filter_var($body['amount'] ?? null, FILTER_VALIDATE_FLOAT);
+        $currency       = preg_replace('/[^a-z]/', '', strtolower($body['currency'] ?? 'usd'));
 
         if (!$subscriptionId || !$amount) {
             return $this->error('subscription_id and amount are required', 422);
         }
 
-        $subscription = Subscription::find($subscriptionId);
+        $subscription = Subscription::find((int) $subscriptionId);
 
         if (!$subscription) {
             return $this->error('Subscription not found', 404);

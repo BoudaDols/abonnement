@@ -5,7 +5,7 @@ metadata:
   labels:
     app: abonnement
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: abonnement
@@ -16,7 +16,8 @@ spec:
     spec:
       initContainers:
       - name: migration
-        image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        image: abonnement:latest
+        imagePullPolicy: Never
         command: ["php", "bin/migrate.php"]
         envFrom:
         - configMapRef:
@@ -27,8 +28,8 @@ spec:
             name: mysql-secrets
       containers:
         - name: abonnement
-          image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          command: ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+          image: abonnement:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           envFrom:

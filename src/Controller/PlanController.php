@@ -14,7 +14,7 @@ class PlanController extends BaseController
 
     public function show(string $id): string
     {
-        $plan = Plan::where('is_active', true)->find($id);
+        $plan = Plan::where('is_active', true)->find((int) $id);
 
         if (!$plan) {
             return $this->error('Plan not found', 404);

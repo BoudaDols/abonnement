@@ -10,3 +10,4 @@ var/app.log
 .env
 .env
 var/app.log
+.vscode/settings.json

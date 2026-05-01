@@ -10,7 +10,7 @@ class SubscriptionController extends BaseController
 {
     public function show(string $id): string
     {
-        $subscription = Subscription::with('plan')->find($id);
+        $subscription = Subscription::with('plan')->find((int) $id);
 
         if (!$subscription) {
             return $this->error('Subscription not found', 404);
@@ -22,8 +22,8 @@ class SubscriptionController extends BaseController
     public function create(): string
     {
         $body = $this->getInput();
-        $userId = $body['user_id'] ?? null;
-        $planId = $body['plan_id'] ?? null;
+        $userId = (int) ($body['user_id'] ?? 0);
+        $planId = (int) ($body['plan_id'] ?? 0);
 
         if (!$userId || !$planId) {
             return $this->error('user_id and plan_id are required', 422);
@@ -70,7 +70,7 @@ class SubscriptionController extends BaseController
 
     public function delete(string $id): string
     {
-        $subscription = Subscription::find($id);
+        $subscription = Subscription::find((int) $id);
 
         if (!$subscription) {
             return $this->error('Subscription not found', 404);
