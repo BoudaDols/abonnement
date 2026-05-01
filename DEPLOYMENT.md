@@ -114,25 +114,25 @@ kubectl get nodes
 # Grant admin user access
 aws eks create-access-entry \
   --cluster-name abonnement-cluster \
-  --principal-arn arn:aws:iam::<account-id>:user/Aws_CLI \
+  --principal-arn arn:aws:iam::<your-account-id>:user/Aws_CLI \
   --region us-east-1
 
 aws eks associate-access-policy \
-  --cluster-name test-cluster \
-  --principal-arn arn:aws:iam::891377162237:user/Aws_CLI \
+  --cluster-name abonnement-cluster \
+  --principal-arn arn:aws:iam::<your-account-id>:user/Aws_CLI \
   --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
   --access-scope type=cluster \
   --region us-east-1
 
 # Grant github-actions-abonnement access
 aws eks create-access-entry \
-  --cluster-name test-cluster \
-  --principal-arn arn:aws:iam::891377162237:user/github-actions-abonnement \
+  --cluster-name abonnement-cluster \
+  --principal-arn arn:aws:iam::<your-account-id>:user/github-actions-abonnement \
   --region us-east-1
 
 aws eks associate-access-policy \
-  --cluster-name test-cluster \
-  --principal-arn arn:aws:iam::891377162237:user/github-actions-abonnement \
+  --cluster-name abonnement-cluster \
+  --principal-arn arn:aws:iam::<your-account-id>:user/github-actions-abonnement \
   --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
   --access-scope type=cluster \
   --region us-east-1
@@ -182,6 +182,9 @@ Where to get each value:
 
 ```bash
 kubectl create secret generic abonnement-secrets \
+  --from-literal=DB_CONNECTION=mysql \
+  --from-literal=DB_HOST=mysql \
+  --from-literal=DB_DATABASE=abonnement \
   --from-literal=DB_USERNAME=abonnement_user \
   --from-literal=DB_PASSWORD='At3stForPrctise' \
   --from-literal=STRIPE_SECRET_KEY=sk_live_xxx \
@@ -268,7 +271,7 @@ The API will be available at the **LoadBalancer** URL shown in `kubectl get serv
 kubectl delete -f k8s/
 
 # Delete EKS cluster
-eksctl delete cluster --name abonnement-cluster --region us-east-1
+eksctl delete cluster --name test-cluster --region us-east-1
 
 # Delete ECR repository
 aws ecr delete-repository \
