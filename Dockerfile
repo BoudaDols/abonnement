@@ -1,5 +1,8 @@
 FROM php:8.4-fpm-alpine
 
+# Upgrade all Alpine packages to get latest security patches
+RUN apk upgrade --no-cache
+
 # Install system dependencies
 RUN apk add --no-cache \
     nginx \
@@ -21,6 +24,9 @@ WORKDIR /var/www
 # Copy composer files first for layer caching
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Remove build dependencies not needed at runtime
+RUN apk del unzip zip
 
 # Copy application code
 COPY . .
