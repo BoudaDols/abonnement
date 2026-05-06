@@ -28,6 +28,11 @@ abstract class BaseController
 
     protected function getInput(): array
     {
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (!str_contains($contentType, 'application/json')) {
+            return [];
+        }
+
         $maxSize = 1024 * 1024; // 1MB limit
         $contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
 
@@ -36,6 +41,10 @@ abstract class BaseController
         }
 
         $raw = file_get_contents('php://input', length: $maxSize);
+        if ($raw === false) {
+            return [];
+        }
+        $raw = str_replace('\0', '', $raw); // strip null bytes
         $decoded = json_decode($raw, true);
 
         return is_array($decoded) ? $decoded : [];

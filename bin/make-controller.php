@@ -1,19 +1,18 @@
 <?php
 
-if ($argc < 2) {
-    echo "Usage: php bin/make-controller.php ControllerName\n";
-    exit(1);
-}
+try {
+    if ($argc < 2) {
+        throw new InvalidArgumentException("Usage: php bin/make-controller.php ControllerName\n");
+    }
 
-$controllerName = $argv[1];
-$controllerPath = __DIR__ . "/../src/Controller/{$controllerName}.php";
+    $controllerName = $argv[1];
+    $controllerPath = __DIR__ . "/../src/Controller/{$controllerName}.php";
 
-if (file_exists($controllerPath)) {
-    echo "Controller {$controllerName} already exists!\n";
-    exit(1);
-}
+    if (file_exists($controllerPath)) {
+        throw new RuntimeException("Controller {$controllerName} already exists!\n");
+    }
 
-$template = "<?php
+    $template = "<?php
 
 namespace App\\Controller;
 
@@ -45,5 +44,12 @@ class {$controllerName}
     }
 }";
 
-file_put_contents($controllerPath, $template);
-echo "Controller {$controllerName} created at src/Controller/{$controllerName}.php\n";
+    file_put_contents($controllerPath, $template);
+    echo "Controller {$controllerName} created at src/Controller/{$controllerName}.php\n";
+} catch (InvalidArgumentException $e) {
+    fwrite(STDERR, $e->getMessage());
+    exit(1);
+} catch (RuntimeException $e) {
+    fwrite(STDERR, $e->getMessage());
+    exit(1);
+}
