@@ -2,17 +2,87 @@ name: CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
-  deploy:
-    name: Build + Deploy to EKS
+  # ─────────────────────────────────────────────
+  # Build & Push to DockerHub
+  # ─────────────────────────────────────────────
+  build:
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/abonnement:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/abonnement:${{ github.sha }}
+
+  # ─────────────────────────────────────────────
+  # Deploy to Local Kubernetes
+  # ─────────────────────────────────────────────
+  deploy-local:
+    name: Deploy to Local Kubernetes
+    runs-on: self-hosted
+    needs: build
+    env:
+      NAMESPACE: default
+
+    steps:
+      - name: Set kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_LOCAL }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Update secrets
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        run: |
+          kubectl create secret generic abonnement-secrets \
+            --namespace="${NAMESPACE}" \
+            --from-literal=DB_USERNAME="abonnement_user" \
+            --from-literal=DB_PASSWORD="${DB_PASSWORD}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic mysql-secrets \
+            --namespace="${NAMESPACE}" \
+            --from-literal=MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}" \
+            --from-literal=MYSQL_USERNAME="abonnement_user" \
+            --from-literal=MYSQL_PASSWORD="${DB_PASSWORD}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Rollout restart
+        run: kubectl rollout restart deployment/abonnement -n ${{ env.NAMESPACE }}
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment/abonnement -n ${{ env.NAMESPACE }} --timeout=120s
+
+  # ─────────────────────────────────────────────
+  # Deploy to AWS EKS
+  # ─────────────────────────────────────────────
+  deploy-aws:
+    name: Deploy to AWS EKS
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      NAMESPACE: default
+
+    steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -20,39 +90,91 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push Docker image to ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-      - name: Update kubeconfig for EKS
+      - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig \
             --region ${{ secrets.AWS_REGION }} \
             --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-      - name: Deploy to EKS
+      - name: Update secrets
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
         run: |
-          sed -i "s|\$ECR_REGISTRY|$ECR_REGISTRY|g" k8s/deployment.yaml
-          sed -i "s|\$ECR_REPOSITORY|$ECR_REPOSITORY|g" k8s/deployment.yaml
-          sed -i "s|\$IMAGE_TAG|$IMAGE_TAG|g" k8s/deployment.yaml
-          kubectl apply -f k8s/configmap.yaml
-          kubectl apply -f k8s/network-policy.yaml
-          kubectl apply -f k8s/mysql.yaml
-          kubectl apply -f k8s/deployment.yaml
-          kubectl apply -f k8s/service.yaml
-          kubectl rollout status deployment/abonnement
+          kubectl create secret generic abonnement-secrets \
+            --namespace="${NAMESPACE}" \
+            --from-literal=DB_USERNAME="abonnement_user" \
+            --from-literal=DB_PASSWORD="${DB_PASSWORD}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic mysql-secrets \
+            --namespace="${NAMESPACE}" \
+            --from-literal=MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}" \
+            --from-literal=MYSQL_USERNAME="abonnement_user" \
+            --from-literal=MYSQL_PASSWORD="${DB_PASSWORD}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Update image tag
+        env:
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/abonnement
+          SHA: ${{ github.sha }}
+        run: |
+          kubectl set image deployment/abonnement \
+            abonnement="${IMAGE}:${SHA}" \
+            -n "${NAMESPACE}"
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment/abonnement -n ${{ env.NAMESPACE }} --timeout=120s
+
+  # ─────────────────────────────────────────────
+  # Deploy to Azure AKS
+  # ─────────────────────────────────────────────
+  deploy-azure:
+    name: Deploy to Azure AKS
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      NAMESPACE: default
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update kubeconfig
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Update secrets
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        run: |
+          kubectl create secret generic abonnement-secrets \
+            --namespace="${NAMESPACE}" \
+            --from-literal=DB_USERNAME="abonnement_user" \
+            --from-literal=DB_PASSWORD="${DB_PASSWORD}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic mysql-secrets \
+            --namespace="${NAMESPACE}" \
+            --from-literal=MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}" \
+            --from-literal=MYSQL_USERNAME="abonnement_user" \
+            --from-literal=MYSQL_PASSWORD="${DB_PASSWORD}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Update image tag
+        env:
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/abonnement
+          SHA: ${{ github.sha }}
+        run: |
+          kubectl set image deployment/abonnement \
+            abonnement="${IMAGE}:${SHA}" \
+            -n "${NAMESPACE}"
+
+      - name: Wait for rollout
+        run: kubectl rollout status deployment/abonnement -n ${{ env.NAMESPACE }} --timeout=120s
