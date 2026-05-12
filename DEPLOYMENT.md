@@ -34,20 +34,20 @@ aws sts get-caller-identity
 
 ```bash
 # Create the user
-aws iam create-user --user-name github-actions-abonnement
+aws iam create-user --user-name github-actions
 
 # Attach required policies
 aws iam attach-user-policy \
-  --user-name github-actions-abonnement \
+  --user-name github-actions \
   --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
 
 aws iam attach-user-policy \
-  --user-name github-actions-abonnement \
+  --user-name github-actions \
   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
 
 # Create inline policy for EKS access
 aws iam put-user-policy \
-  --user-name github-actions-abonnement \
+  --user-name github-actions \
   --policy-name eks-describe-cluster \
   --policy-document '{
     "Version": "2012-10-17",
@@ -61,7 +61,7 @@ aws iam put-user-policy \
   }'
 
 # Create access keys (save these for GitHub Secrets)
-aws iam create-access-key --user-name github-actions-abonnement
+aws iam create-access-key --user-name github-actions
 ```
 
 ---
