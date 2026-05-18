@@ -65,12 +65,25 @@ class SubscriptionController extends BaseController
             'ends_at'   => Carbon::now()->addDays($plan->duration_days),
         ]);
 
-        return $this->json($subscription->load('plan'), 201);
+        $subscription->load('plan');
+
+        $this->kafka->publish('subscription.changed', [
+            'event'           => 'subscription.created',
+            'subscription_id' => $subscription->id,
+            'user_id'         => $subscription->user_id,
+            'plan_name'       => $subscription->plan->name,
+            'plan_type'       => $subscription->plan->type,
+            'status'          => $subscription->status,
+            'starts_at'       => $subscription->starts_at,
+            'ends_at'         => $subscription->ends_at,
+        ], (string) $userId);
+
+        return $this->json($subscription, 201);
     }
 
     public function delete(string $id): string
     {
-        $subscription = Subscription::find((int) $id);
+        $subscription = Subscription::with('plan')->find((int) $id);
 
         if (!$subscription) {
             return $this->error('Subscription not found', 404);
@@ -81,6 +94,14 @@ class SubscriptionController extends BaseController
         }
 
         $subscription->update(['status' => 'canceled']);
+
+        $this->kafka->publish('subscription.changed', [
+            'event'           => 'subscription.canceled',
+            'subscription_id' => $subscription->id,
+            'user_id'         => $subscription->user_id,
+            'plan_name'       => $subscription->plan->name ?? null,
+            'status'          => 'canceled',
+        ], (string) $subscription->user_id);
 
         return $this->success(['message' => 'Subscription canceled']);
     }

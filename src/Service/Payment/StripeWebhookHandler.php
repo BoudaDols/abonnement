@@ -4,15 +4,18 @@ namespace App\Service\Payment;
 
 use App\Model\Payment;
 use App\Model\Subscription;
+use App\Service\KafkaProducer;
 use Carbon\Carbon;
 
 class StripeWebhookHandler
 {
     private string $webhookSecret;
+    private KafkaProducer $kafka;
 
     public function __construct()
     {
         $this->webhookSecret = $_ENV['STRIPE_WEBHOOK_SECRET'] ?? '';
+        $this->kafka = new KafkaProducer();
     }
 
     public function verify(string $payload, string $signature): bool
@@ -50,6 +53,16 @@ class StripeWebhookHandler
 
         $payment->update(['status' => 'paid', 'paid_at' => Carbon::now()]);
         $payment->subscription->update(['status' => 'active']);
+
+        $this->kafka->publish('payment.succeeded', [
+            'event'           => 'payment.succeeded',
+            'payment_id'      => $payment->id,
+            'subscription_id' => $payment->subscription_id,
+            'user_id'         => $payment->subscription->user_id,
+            'amount'          => $payment->amount,
+            'transaction_id'  => $intentId,
+            'paid_at'         => $payment->paid_at,
+        ], (string) $payment->subscription->user_id);
     }
 
     private function onFailed(string $intentId): void
@@ -62,5 +75,14 @@ class StripeWebhookHandler
 
         $payment->update(['status' => 'failed']);
         $payment->subscription->update(['status' => 'pending']);
+
+        $this->kafka->publish('payment.failed', [
+            'event'           => 'payment.failed',
+            'payment_id'      => $payment->id,
+            'subscription_id' => $payment->subscription_id,
+            'user_id'         => $payment->subscription->user_id,
+            'amount'          => $payment->amount,
+            'transaction_id'  => $intentId,
+        ], (string) $payment->subscription->user_id);
     }
 }

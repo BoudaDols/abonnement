@@ -3,12 +3,14 @@
 namespace App\Service\Payment;
 
 use App\Model\Payment;
+use App\Service\KafkaProducer;
 use Carbon\Carbon;
 
 class PaypalWebhookHandler
 {
     private string $webhookId;
     private string $baseUrl;
+    private KafkaProducer $kafka;
 
     public function __construct()
     {
@@ -16,6 +18,7 @@ class PaypalWebhookHandler
         $this->baseUrl   = $_ENV['APP_ENV'] === 'prod'
             ? 'https://api.paypal.com'
             : 'https://api.sandbox.paypal.com';
+        $this->kafka = new KafkaProducer();
     }
 
     public function verify(array $headers, string $payload): bool
@@ -68,6 +71,16 @@ class PaypalWebhookHandler
 
         $payment->update(['status' => 'paid', 'paid_at' => Carbon::now()]);
         $payment->subscription->update(['status' => 'active']);
+
+        $this->kafka->publish('payment.succeeded', [
+            'event'           => 'payment.succeeded',
+            'payment_id'      => $payment->id,
+            'subscription_id' => $payment->subscription_id,
+            'user_id'         => $payment->subscription->user_id,
+            'amount'          => $payment->amount,
+            'transaction_id'  => $orderId,
+            'paid_at'         => $payment->paid_at,
+        ], (string) $payment->subscription->user_id);
     }
 
     private function onFailed(string $orderId): void
@@ -80,6 +93,15 @@ class PaypalWebhookHandler
 
         $payment->update(['status' => 'failed']);
         $payment->subscription->update(['status' => 'pending']);
+
+        $this->kafka->publish('payment.failed', [
+            'event'           => 'payment.failed',
+            'payment_id'      => $payment->id,
+            'subscription_id' => $payment->subscription_id,
+            'user_id'         => $payment->subscription->user_id,
+            'amount'          => $payment->amount,
+            'transaction_id'  => $orderId,
+        ], (string) $payment->subscription->user_id);
     }
 
     private function getAccessToken(): string

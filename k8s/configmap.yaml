@@ -10,3 +10,5 @@ data:
   DB_PORT: "3306"
   DB_DATABASE: "abonnement"
   PAYMENT_GATEWAY: "stripe"
+  KAFKA_BROKERS: "kafka:9092"
+  KAFKA_ENABLED: "true"

@@ -2,12 +2,16 @@
 
 namespace App\Controller;
 
+use App\Service\KafkaProducer;
 use Psr\Log\LoggerInterface;
 
 abstract class BaseController
 {
+    protected KafkaProducer $kafka;
+
     public function __construct(protected LoggerInterface $logger)
     {
+        $this->kafka = new KafkaProducer();
     }
 
     protected function json(mixed $data, int $status = 200): string

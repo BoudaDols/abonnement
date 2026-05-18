@@ -61,6 +61,17 @@ class PaymentController extends BaseController
 
         $subscription->update(['status' => 'active']);
 
+        $this->kafka->publish('payment.succeeded', [
+            'event'           => 'payment.succeeded',
+            'payment_id'      => $payment->id,
+            'subscription_id' => $subscriptionId,
+            'user_id'         => $subscription->user_id,
+            'amount'          => $amount,
+            'currency'        => $currency,
+            'transaction_id'  => $transactionId,
+            'paid_at'         => $payment->paid_at,
+        ], (string) $subscription->user_id);
+
         return $this->json($payment, 201);
     }
 
